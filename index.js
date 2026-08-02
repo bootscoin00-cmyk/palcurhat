@@ -20,7 +20,7 @@ const waitingCurhat = {};
 
 console.log("🫂 PalCurhat aktif...");
 
-async function setupDatabase(await pool.query(`
+async function setupDatabase() { await pool.query(`
     CREATE TABLE IF NOT EXISTS confessions (
       id SERIAL PRIMARY KEY,
       sender_id BIGINT NOT NULL,
@@ -37,7 +37,7 @@ async function setupDatabase(await pool.query(`
       user_id BIGINT,
       PRIMARY KEY(confession_id, user_id)
     )
-  `);) {
+  `);) 
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS experiences (
@@ -47,18 +47,18 @@ async function setupDatabase(await pool.query(`
     )
   `);
 
-  console.log("✅ Database siap");
-
-}
-
-setupDatabase();
-
-await pool.query(`
+  await pool.query(`
 CREATE TABLE IF NOT EXISTS reply_sessions (
     user_id BIGINT PRIMARY KEY,
     confession_id INTEGER
 )
 `);
+                                
+  console.log("✅ Database siap");
+  }
+
+setupDatabase();
+
 bot.onText(/\/start/, async (msg) => {
 
   await bot.sendMessage(
