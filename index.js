@@ -54,3 +54,58 @@ async function setupDatabase() {
 }
 
 setupDatabase();
+
+bot.onText(/\/start/, async (msg) => {
+
+  await bot.sendMessage(
+    msg.chat.id,
+    "🫂 Selamat datang di PalCurhat\n\nTempat berbagi cerita secara anonim.",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "✍️ Kirim Curhat",
+              callback_data: "send_curhat"
+            }
+          ],
+          [
+            {
+              text: "📖 Cara Kerja",
+              callback_data: "help"
+            }
+          ]
+        ]
+      }
+    }
+  );
+
+});
+
+bot.on("callback_query", async (query) => {
+
+  const chatId = query.message.chat.id;
+
+  if (query.data === "send_curhat") {
+
+    waitingCurhat[chatId] = true;
+
+    await bot.sendMessage(
+      chatId,
+      "🫂 Silakan kirim curhatanmu.\n\nBisa berupa teks, foto, atau video.\n\nIdentitasmu akan disembunyikan."
+    );
+
+  }
+
+  if (query.data === "help") {
+
+    await bot.sendMessage(
+      chatId,
+      "📖 Cara Kerja\n\n1. Kirim curhat melalui bot.\n2. Bot mempostingnya secara anonim ke grup.\n3. Member lain bisa memberi dukungan ❤️, menekan 🫂 Aku Pernah Mengalami, atau membalas secara anonim."
+    );
+
+  }
+
+  await bot.answerCallbackQuery(query.id);
+
+});
