@@ -109,3 +109,148 @@ bot.on("callback_query", async (query) => {
   await bot.answerCallbackQuery(query.id);
 
 });
+
+// =====================
+// TERIMA CURHAT
+// =====================
+
+bot.on("message", async (msg) => {
+
+  const chatId = msg.chat.id;
+
+  // Hanya private chat
+  if (msg.chat.type !== "private") return;
+
+  // Abaikan command
+  if (msg.text?.startsWith("/")) return;
+
+  // User belum memilih Kirim Curhat
+  if (!waitingCurhat[chatId]) return;
+
+  try {
+
+    const time = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    let sent;
+
+    // =====================
+    // TEXT
+    // =====================
+
+    if (msg.text) {
+
+      sent = await bot.sendMessage(
+        GROUP_ID,
+`🫂 CURHAT
+
+${msg.text}
+
+━━━━━━━━━━━━
+Anonim • ${time}`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "❤️ Dukung (0)",
+                  callback_data: "support_0"
+                }
+              ],
+              [
+                {
+                  text: "🫂 Aku Pernah Mengalami (0)",
+                  callback_data: "experience_0"
+                }
+              ],
+              [
+                {
+                  text: "💬 Balas",
+                  callback_data: "reply_0"
+                }
+              ]
+            ]
+          }
+        }
+      );
+
+    }
+
+    else {
+
+      await bot.sendMessage(
+        chatId,
+        "Saat ini hanya teks yang didukung."
+      );
+
+      return;
+
+    }
+
+    // Simpan ke database
+    const result = await pool.query(
+      `
+      INSERT INTO confessions
+      (sender_id, group_message_id)
+      VALUES ($1,$2)
+      RETURNING id
+      `,
+      [
+        msg.from.id,
+        sent.message_id
+      ]
+    );
+
+    const confessionId = result.rows[0].id;
+
+    // Update callback tombol dengan ID database
+    await bot.editMessageReplyMarkup(
+      {
+        inline_keyboard: [
+          [
+            {
+              text: "❤️ Dukung (0)",
+              callback_data: `support_${confessionId}`
+            }
+          ],
+          [
+            {
+              text: "🫂 Aku Pernah Mengalami (0)",
+              callback_data: `experience_${confessionId}`
+            }
+          ],
+          [
+            {
+              text: "💬 Balas",
+              callback_data: `reply_${confessionId}`
+            }
+          ]
+        ]
+      },
+      {
+        chat_id: GROUP_ID,
+        message_id: sent.message_id
+      }
+    );
+
+    delete waitingCurhat[chatId];
+
+    await bot.sendMessage(
+      chatId,
+      "✅ Curhatanmu berhasil dikirim secara anonim."
+    );
+
+  } catch (error) {
+
+    console.log(error);
+
+    await bot.sendMessage(
+      chatId,
+      "❌ Gagal mengirim curhat."
+    );
+
+  }
+
+});
