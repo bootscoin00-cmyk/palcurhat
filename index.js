@@ -37,7 +37,7 @@ async function setupDatabase() { await pool.query(`
       user_id BIGINT,
       PRIMARY KEY(confession_id, user_id)
     )
-  `);) 
+  `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS experiences (
