@@ -82,8 +82,126 @@ bot.onText(/\/start/, async (msg) => {
 
 });
 
-bot.on("callback_query", async (query) => {
+bot.on("callback_query", async (query) => { 
 
+  if (query.data.startsWith("support_")) {
+
+  const confessionId = query.data.split("_")[1];
+  const userId = query.from.id;
+
+  // Cek apakah sudah pernah mendukung
+  const check = await pool.query(
+    "SELECT * FROM supports WHERE confession_id=$1 AND user_id=$2",
+    [confessionId, userId]
+  );
+
+  if (check.rows.length > 0) {
+    return bot.answerCallbackQuery(query.id, {
+      text: "❤️ Kamu sudah memberikan dukungan."
+    });
+  }
+
+  await pool.query(
+    "INSERT INTO supports(confession_id,user_id) VALUES($1,$2)",
+    [confessionId, userId]
+  );
+
+  await pool.query(
+    "UPDATE confessions SET support_count = support_count + 1 WHERE id=$1",
+    [confessionId]
+  );
+
+  const result = await pool.query(
+    "SELECT support_count, experience_count FROM confessions WHERE id=$1",
+    [confessionId]
+  );
+
+  const data = result.rows[0];
+
+  await bot.editMessageReplyMarkup({
+    inline_keyboard: [
+      [{
+        text: `❤️ Dukung (${data.support_count})`,
+        callback_data: `support_${confessionId}`
+      }],
+      [{
+        text: `🫂 Aku Pernah Mengalami (${data.experience_count})`,
+        callback_data: `experience_${confessionId}`
+      }],
+      [{
+        text: "💬 Balas",
+        callback_data: `reply_${confessionId}`
+      }]
+    ]
+  },{
+    chat_id: query.message.chat.id,
+    message_id: query.message.message_id
+  });
+
+  return bot.answerCallbackQuery(query.id,{
+    text:"❤️ Terima kasih atas dukungannya."
+  });
+
+}
+  if (query.data.startsWith("experience_")) {
+
+  const confessionId = query.data.split("_")[1];
+  const userId = query.from.id;
+
+  const check = await pool.query(
+    "SELECT * FROM experiences WHERE confession_id=$1 AND user_id=$2",
+    [confessionId, userId]
+  );
+
+  if (check.rows.length > 0) {
+    return bot.answerCallbackQuery(query.id,{
+      text:"🫂 Kamu sudah memilih ini."
+    });
+  }
+
+  await pool.query(
+    "INSERT INTO experiences(confession_id,user_id) VALUES($1,$2)",
+    [confessionId,userId]
+  );
+
+  await pool.query(
+    "UPDATE confessions SET experience_count = experience_count + 1 WHERE id=$1",
+    [confessionId]
+  );
+
+  const result = await pool.query(
+    "SELECT support_count, experience_count FROM confessions WHERE id=$1",
+    [confessionId]
+  );
+
+  const data = result.rows[0];
+
+  await bot.editMessageReplyMarkup({
+    inline_keyboard:[
+      [{
+        text:`❤️ Dukung (${data.support_count})`,
+        callback_data:`support_${confessionId}`
+      }],
+      [{
+        text:`🫂 Aku Pernah Mengalami (${data.experience_count})`,
+        callback_data:`experience_${confessionId}`
+      }],
+      [{
+        text:"💬 Balas",
+        callback_data:`reply_${confessionId}`
+      }]
+    ]
+  },{
+    chat_id:query.message.chat.id,
+    message_id:query.message.message_id
+  });
+
+  return bot.answerCallbackQuery(query.id,{
+    text:"🫂 Terima kasih telah berbagi."
+  });
+
+  }
+  
   const chatId = query.message.chat.id;
 
   if (query.data === "send_curhat") {
