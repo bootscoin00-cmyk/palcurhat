@@ -20,9 +20,7 @@ const waitingCurhat = {};
 
 console.log("🫂 PalCurhat aktif...");
 
-async function setupDatabase() {
-
-  await pool.query(`
+async function setupDatabase(await pool.query(`
     CREATE TABLE IF NOT EXISTS confessions (
       id SERIAL PRIMARY KEY,
       sender_id BIGINT NOT NULL,
@@ -39,7 +37,7 @@ async function setupDatabase() {
       user_id BIGINT,
       PRIMARY KEY(confession_id, user_id)
     )
-  `);
+  `);) {
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS experiences (
