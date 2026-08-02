@@ -272,6 +272,65 @@ bot.on("message", async (msg) => {
   // Abaikan command
   if (msg.text?.startsWith("/")) return;
 
+  // =====================
+// BALAS CURHAT
+// =====================
+
+const session = await pool.query(
+  "SELECT * FROM reply_sessions WHERE user_id=$1",
+  [msg.from.id]
+);
+
+if (session.rows.length > 0) {
+
+  const confessionId = session.rows[0].confession_id;
+
+  const confession = await pool.query(
+    "SELECT sender_id FROM confessions WHERE id=$1",
+    [confessionId]
+  );
+
+  if (confession.rows.length === 0) {
+
+    await bot.sendMessage(
+      chatId,
+      "❌ Curhat tidak ditemukan."
+    );
+
+    await pool.query(
+      "DELETE FROM reply_sessions WHERE user_id=$1",
+      [msg.from.id]
+    );
+
+    return;
+
+  }
+
+  const senderId = confession.rows[0].sender_id;
+
+  await bot.sendMessage(
+    senderId,
+`💌 Ada balasan anonim untuk curhatanmu
+
+━━━━━━━━━━━━
+
+${msg.text}`
+  );
+
+  await bot.sendMessage(
+    chatId,
+    "✅ Balasan berhasil dikirim."
+  );
+
+  await pool.query(
+    "DELETE FROM reply_sessions WHERE user_id=$1",
+    [msg.from.id]
+  );
+
+  return;
+
+}
+  
   // User belum memilih Kirim Curhat
   if (!waitingCurhat[chatId]) return;
 
