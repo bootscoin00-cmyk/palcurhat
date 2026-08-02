@@ -55,6 +55,12 @@ async function setupDatabase() {
 
 setupDatabase();
 
+await pool.query(`
+CREATE TABLE IF NOT EXISTS reply_sessions (
+    user_id BIGINT PRIMARY KEY,
+    confession_id INTEGER
+)
+`);
 bot.onText(/\/start/, async (msg) => {
 
   await bot.sendMessage(
@@ -84,6 +90,32 @@ bot.onText(/\/start/, async (msg) => {
 
 bot.on("callback_query", async (query) => { 
 
+  if (query.data.startsWith("reply_")) {
+
+  const confessionId = query.data.split("_")[1];
+
+  await pool.query(
+    `
+    INSERT INTO reply_sessions(user_id, confession_id)
+    VALUES($1,$2)
+    ON CONFLICT(user_id)
+    DO UPDATE SET confession_id=$2
+    `,
+    [
+      query.from.id,
+      confessionId
+    ]
+  );
+
+  await bot.sendMessage(
+    query.from.id,
+    "💬 Silakan kirim balasanmu.\n\nBalasan akan dikirim secara anonim."
+  );
+
+  return bot.answerCallbackQuery(query.id);
+
+}
+  
   if (query.data.startsWith("support_")) {
 
   const confessionId = query.data.split("_")[1];
